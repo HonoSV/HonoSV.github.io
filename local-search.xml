@@ -11,6 +11,28 @@
     <content type="html"><![CDATA[<p>自从给树莓派装上openwrt以后，我观察到它的温度一直在70多度徘徊不定，最高飙到过80度。于是咬咬牙在淘宝下单了一个新的带风扇的壳，9块8包邮。</p><p>拿到货当晚兴冲冲给它换上，重新开机，温度稳定在了50度上下。</p><p>但是新的问题出现了，重启后我的移动硬盘挂载不上去了，一直在报未知错误，我尝试用mount命令手动挂载，却出现：</p><p><strong>ntfs-3g-mount: mount failed: 设备或资源忙</strong></p><p><img src="/2023/09/09/%E8%A7%A3%E5%86%B3%E6%A0%91%E8%8E%93%E6%B4%BE%E7%A1%AC%E7%9B%98%E6%8C%82%E8%BD%BD%E5%A4%B1%E8%B4%A5%E9%97%AE%E9%A2%98/0.webp" alt="高高兴兴换壳中"></p><h2 id="排查"><a href="#排查" class="headerlink" title="排查"></a>排查</h2><p>一开始怀疑是硬盘有损坏，插到台式电脑上进行检测、修复、测试，发现读写功能一切正常。</p><p>然后怀疑是进程占用，但是却查不到任何占用磁盘的进程号。</p><p>接着怀疑是电压不足的原因，因为新插了一个风扇在板子上，于是拆下来重启，依然挂载失败。</p><p>怀疑ntfs挂载有问题……</p><p>……</p><p>最后怀疑是usb接口坏了，弄了个u盘插到b口上，果然也挂载不上去。</p><p>去<code>/var/log</code>下面翻看了以下系统日志，发现有一行打印 usb device is blocked.</p><p>那什么东西会去block usb口呢？我把目光瞄向了上一次新增的，一个自启的容器：openwrt。</p><p>使用docker rmi 和 docker rm命令清理掉openwrt 的镜像和容器后，树莓派自动重启了，随之硬盘也能正常挂载了。</p><h2 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h2><p>回想了一下，整个事情是这么个回事：</p><p>树莓派启动 –&gt; docker启动 –&gt; openwrt容器拉起 –&gt; 磁盘挂载</p><p>因为磁盘挂载速度慢于容器启动速度，且openwrt会锁usb口设备，所以会有上面这么蛋疼的一幕。</p><p>虽然还不清楚根因，但解决思路已经很清晰了：让openwrt容器在磁盘挂载后再启动。</p><p>这边先按照上一篇博文《树莓派自制UU加速盒》中重新搞了一下openwrt容器，但有几点不一样的：</p><ol><li><p>启动时去掉命令里的<code>--restart always</code></p></li><li><p>进容器配置好网络和UU插件，并把家里设备都加速好</p></li><li><p>退出容器并把当前这个配置好的容器创建成我们自己的镜像：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">sudo docker commit openwrt myopenwrt<br></code></pre></td></tr></table></figure></li><li><p>移除当前容器，并使用我们自己的镜像运行，这次带上自启参数：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">sudo docker rm openwrt --force<br>sudo docker run --restart always --name myopenwrt -d --network macnet --privileged myopenwrt:latest<br></code></pre></td></tr></table></figure></li></ol><p>这样容器重启，也不需要我们重新配置了，它会自动去拉我们已经配置好的镜像。</p><p>接下来就是让docker开机的时候延迟启动：</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">sudo vim /usr/lib/systemd/system/docker.service<br></code></pre></td></tr></table></figure><p>在<code>[Service]</code>下面添加一行配置：</p><figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs properties"><span class="hljs-attr">ExecStartPre</span>=<span class="hljs-string">sleep 30s</span><br></code></pre></td></tr></table></figure><p>重启树莓派进行测试，磁盘挂载、openwrt运行一切正常。</p><p><img src="/2023/09/09/%E8%A7%A3%E5%86%B3%E6%A0%91%E8%8E%93%E6%B4%BE%E7%A1%AC%E7%9B%98%E6%8C%82%E8%BD%BD%E5%A4%B1%E8%B4%A5%E9%97%AE%E9%A2%98/1.webp" alt="运行正常"></p>]]></content>
     
     
+    <categories>
+      
+      <category>服务器</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>linux</tag>
+      
+      <tag>树莓派</tag>
+      
+      <tag>docker</tag>
+      
+      <tag>openwrt</tag>
+      
+      <tag>硬盘</tag>
+      
+      <tag>挂载</tag>
+      
+    </tags>
     
   </entry>
   
