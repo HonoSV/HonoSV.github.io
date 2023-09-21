@@ -4,6 +4,37 @@
   
   
   <entry>
+    <title>设计模式——原型模式</title>
+    <link href="/2023/09/21/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E2%80%94%E2%80%94%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/"/>
+    <url>/2023/09/21/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E2%80%94%E2%80%94%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/</url>
+    
+    <content type="html"><![CDATA[<p>原型模式（Prototype Pattern）的简单程度仅次于单例模式和迭代器模式。其定义如下： Specify the kinds of objects to create using a prototypical instance,and create new objects by copying this prototype.（用原型实例指定创建对象的种类，并且通过拷贝这些原型创建新的对象。）</p><p><img src="/2023/09/21/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E2%80%94%E2%80%94%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/1.webp" alt="原型模式的通用类图"></p><p>原型模式的核心就是一个clone 方法，通过java 提供的Cloneable 接口来实现量产对象。</p><p>比如已经new 出来一个红色商品，现在以该商品作为原型，快速复制多个：</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Prototype</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">Cloneable</span> </span>&#123;<br>    <span class="hljs-keyword">private</span> String color;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">Prototype</span><span class="hljs-params">(String color)</span> </span>&#123;<br>        <span class="hljs-keyword">this</span>.color = color;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> Prototype <span class="hljs-title">clone</span><span class="hljs-params">()</span> </span>&#123;<br>        Prototype prototype = <span class="hljs-keyword">null</span>;<br>        <span class="hljs-keyword">try</span> &#123;<br>            prototype = (Prototype) <span class="hljs-keyword">super</span>.clone();<br>        &#125; <span class="hljs-keyword">catch</span> (CloneNotSupportedException e) &#123;<br>            e.printStackTrace();<br>        &#125;<br>        <span class="hljs-keyword">return</span> prototype;<br>    &#125;<br><br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">showColor</span><span class="hljs-params">()</span> </span>&#123;<br>        System.out.println(<span class="hljs-keyword">this</span>.color);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Client</span> </span>&#123;<br>    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;<br>        Prototype prototype = <span class="hljs-keyword">new</span> Prototype(<span class="hljs-string">&quot;Red&quot;</span>);<br>        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt;= <span class="hljs-number">5</span>; i++) &#123;<br>            Prototype clonePrototype = prototype.clone();<br>            clonePrototype.showColor();<br>        &#125;<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure><p>控制台打印：</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java">Red<br>Red<br>Red<br>Red<br>Red<br>Red<br></code></pre></td></tr></table></figure><p>原型模式的特点：</p><p>​    ● 性能优良 原型模式是在内存二进制流的拷贝，要比直接new一个对象性能好很多，特别是要在一 个循环体内产生大量的对象时，原型模式可以更好地体现其优点。 </p><p>​    ● 逃避构造函数的约束 这既是它的优点也是缺点，直接在内存中拷贝，构造函数是不会执行。优点就是减少了约束，缺点也是减少了约束，需要大家在实际应用时考虑。</p><p>使用原型模式要注意以下几点：</p><ul><li>构造函数不会被执行</li><li>clone 方法默认是浅拷贝，要注意使用原始类型的成员变量或自行实现深拷贝</li><li>final 关键字与clone 方法冲突</li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>设计模式</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>java</tag>
+      
+      <tag>原型模式</tag>
+      
+      <tag>深拷贝</tag>
+      
+      <tag>浅拷贝</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>利用AutoBangumi实现自动化追番</title>
     <link href="/2023/09/21/%E5%88%A9%E7%94%A8AutoBangumi%E5%AE%9E%E7%8E%B0%E8%87%AA%E5%8A%A8%E5%8C%96%E8%BF%BD%E7%95%AA/"/>
     <url>/2023/09/21/%E5%88%A9%E7%94%A8AutoBangumi%E5%AE%9E%E7%8E%B0%E8%87%AA%E5%8A%A8%E5%8C%96%E8%BF%BD%E7%95%AA/</url>
